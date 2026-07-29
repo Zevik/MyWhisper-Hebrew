@@ -51,11 +51,7 @@ class Overlay(QWidget):
 
     def set_state(self, state):
         self.state = state
-        if state in ("recording", "transcribing"):
-            self.show()
-            self.raise_()
-        else:
-            self.hide()
+        self.hide()
 
     def _tick(self):
         if self.state in ("recording", "transcribing"):
@@ -426,6 +422,14 @@ class MainWindow(FramelessWindow):
             self._stop_mic_test()
         e.accept()
         self.ui.request_quit()
+
+    def show_notice(self, title: str, msg: str, level: str = "info"):
+        if hasattr(self, "rec_status_lbl"):
+            prefix = "⚠️ " if level == "warning" else "ℹ️ "
+            text = f"{prefix}{title}: {msg}" if title else f"{prefix}{msg}"
+            self.rec_status_lbl.setText(text)
+            color = "#f59e0b" if level == "warning" else self.p["text"]
+            self.rec_status_lbl.setStyleSheet(f"color:{color}; font-size:13px; font-weight:bold;")
 
     def set_rec_state(self, state):
         if not hasattr(self, "rec_btn"):
@@ -1032,7 +1036,7 @@ class AppUI(QObject):
         self.format_bidi = format_bidi or (lambda t: t)
         self.update_history = update_history or (lambda i, t: None)
         self.delete_history = delete_history or (lambda i: None)
-        self.notify = lambda *a, **k: None  # wired to Tray.notify by main
+        self.notify = self.notify_in_dashboard
         self.set_hotkey = lambda h: True    # wired to Mywishper._set_hotkey by main
         self.relaunch_as_admin = lambda: False
         self.list_input_devices = lambda: []       # wired by main
@@ -1054,6 +1058,10 @@ class AppUI(QObject):
         self._overlay_sig.connect(self._on_state_changed)
         self._settings_sig.connect(self._show_window)
         self._quit_sig.connect(QApplication.instance().quit)
+
+    def notify_in_dashboard(self, title: str, msg: str, level: str = "info"):
+        if self._win is not None and hasattr(self._win, "show_notice"):
+            self._win.show_notice(title, msg, level)
 
     def _on_state_changed(self, state):
         if self._win is not None and hasattr(self._win, "set_rec_state"):
