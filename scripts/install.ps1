@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 $RepoUrl = "https://github.com/Zevik/MyWhisper-Hebrew.git"
 $InstallDir = Join-Path $env:USERPROFILE "MyWhisper"
 
-# Add standard Git installation paths to current session PATH immediately
+# Add standard Git installation paths to current session PATH immediately if present
 $env:Path += ";C:\Program Files\Git\cmd;C:\Program Files (x86)\Git\cmd;C:\Users\$env:USERNAME\AppData\Local\Programs\Git\cmd"
 
 try {
@@ -14,49 +14,7 @@ try {
     Write-Host "=== MyWhisper installer ===" -ForegroundColor Cyan
     Write-Host "Install dir: $InstallDir" -ForegroundColor DarkGray
 
-    # 1. Git Detection and Installation
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-Host "Git not found - attempting install via winget..." -ForegroundColor Yellow
-        
-        try {
-            winget install -e --id Git.Git -s winget --accept-source-agreements --accept-package-agreements | Out-Null
-        } catch {
-            Write-Host "Winget search failed, trying direct download..." -ForegroundColor DarkGray
-        }
-
-        # Refresh PATH again
-        $env:Path += ";C:\Program Files\Git\cmd;C:\Program Files (x86)\Git\cmd;C:\Users\$env:USERNAME\AppData\Local\Programs\Git\cmd"
-
-        # Direct download fallback if winget failed
-        if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-            $stdGit = "C:\Program Files\Git\cmd\git.exe"
-            if (Test-Path $stdGit) {
-                $env:Path += ";C:\Program Files\Git\cmd"
-            } else {
-                Write-Host "Downloading Git for Windows directly..." -ForegroundColor Yellow
-                $gitUrl = "https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe"
-                $installerPath = Join-Path $env:TEMP "Git-Installer.exe"
-                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                Invoke-WebRequest -Uri $gitUrl -OutFile $installerPath
-                Write-Host "Installing Git..." -ForegroundColor Yellow
-                Start-Process $installerPath -ArgumentList "/VERYSILENT /NORESTART" -Wait
-                $env:Path += ";C:\Program Files\Git\cmd"
-            }
-        }
-    }
-
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        $stdGit = "C:\Program Files\Git\cmd\git.exe"
-        if (Test-Path $stdGit) {
-            $env:Path += ";C:\Program Files\Git\cmd"
-        } else {
-            Write-Host "Git installation failed. Please install Git manually from https://git-scm.com" -ForegroundColor Red
-            Read-Host "Press Enter to exit..."
-            exit 1
-        }
-    }
-
-    # Stop any running instance first
+    # Stop any running instance first so files are not locked
     function Stop-MyWhisper {
         Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
             $_.Name -eq "pythonw.exe" -and $_.CommandLine -and
@@ -66,16 +24,48 @@ try {
     Stop-MyWhisper
     Start-Sleep -Milliseconds 800
 
-    # 2. Clone or update
-    if (Test-Path (Join-Path $InstallDir ".git")) {
-        Write-Host "Existing install found - updating..." -ForegroundColor Cyan
-        git -C $InstallDir pull --ff-only
+    # 1. Download or update code (Git if available, or direct ZIP download)
+    if (Get-Command git -ErrorAction SilentlyContinue) {
+        if (Test-Path (Join-Path $InstallDir ".git")) {
+            Write-Host "Existing install found - updating via Git..." -ForegroundColor Cyan
+            git -C $InstallDir pull --ff-only
+        } else {
+            Write-Host "Cloning repository..." -ForegroundColor Cyan
+            git clone $RepoUrl $InstallDir
+        }
     } else {
-        Write-Host "Cloning repository..." -ForegroundColor Cyan
-        git clone $RepoUrl $InstallDir
+        Write-Host "Downloading MyWhisper package..." -ForegroundColor Cyan
+        $zipUrl = "https://github.com/Zevik/MyWhisper-Hebrew/archive/refs/heads/main.zip"
+        $zipFile = Join-Path $env:TEMP "MyWhisper-main.zip"
+        
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile
+        
+        $cfgBackup = Join-Path $env:TEMP "mywhisper_config_backup.json"
+        if (Test-Path $InstallDir) {
+            $cfg = Join-Path $InstallDir "config.json"
+            if (Test-Path $cfg) { Copy-Item $cfg $cfgBackup -Force }
+        }
+
+        Write-Host "Extracting files..." -ForegroundColor Cyan
+        $tempExtract = Join-Path $env:TEMP "MyWhisperExtract"
+        if (Test-Path $tempExtract) { Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue }
+        Expand-Archive -Path $zipFile -DestinationPath $tempExtract -Force
+        
+        $extractedFolder = Join-Path $tempExtract "MyWhisper-Hebrew-main"
+        if (-not (Test-Path $InstallDir)) { New-Item -ItemType Directory -Path $InstallDir | Out-Null }
+        
+        Copy-Item -Path "$extractedFolder\*" -Destination $InstallDir -Recurse -Force
+        Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
+        Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
+
+        if (Test-Path $cfgBackup) {
+            Copy-Item $cfgBackup (Join-Path $InstallDir "config.json") -Force
+            Remove-Item $cfgBackup -Force -ErrorAction SilentlyContinue
+        }
     }
 
-    # 3. Python 3.12 venv + dependencies
+    # 2. Python 3.12 venv + dependencies
     & powershell -ExecutionPolicy Bypass -File (Join-Path $InstallDir "scripts\setup.ps1")
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Setup failed - see error messages above." -ForegroundColor Red
@@ -83,7 +73,7 @@ try {
         exit 1
     }
 
-    # 4. Desktop shortcut -> silent pythonw launcher
+    # 3. Desktop shortcut -> silent pythonw launcher
     $ws = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath("Desktop")
     $lnk = $ws.CreateShortcut((Join-Path $desktop "MyWhisper.lnk"))
@@ -97,7 +87,7 @@ try {
     if (Test-Path $icon) { $lnk.IconLocation = "$icon,0" }
     $lnk.Save()
 
-    # 5. Launch the app now
+    # 4. Launch the app now
     Stop-MyWhisper
     Start-Sleep -Milliseconds 500
     if (Test-Path $pythonw) {
