@@ -420,8 +420,8 @@ class MainWindow(FramelessWindow):
     def closeEvent(self, e):
         if getattr(self, "_mic_testing", False):
             self._stop_mic_test()
-        e.accept()
-        self.ui.request_quit()
+        e.ignore()
+        self.hide()
 
     def show_notice(self, title: str, msg: str, level: str = "info"):
         if hasattr(self, "rec_status_lbl"):
@@ -434,6 +434,7 @@ class MainWindow(FramelessWindow):
     def set_rec_state(self, state):
         if not hasattr(self, "rec_btn"):
             return
+        self.rec_btn.setEnabled(state != "transcribing")
         if state == "recording":
             self.rec_btn.setText("🔴 מקליט... לחץ לעצירה ותמלול")
             self.rec_btn.setStyleSheet(
@@ -456,6 +457,8 @@ class MainWindow(FramelessWindow):
 
     def _on_rec_click(self):
         if hasattr(self.ui, "toggle") and callable(self.ui.toggle):
+            self.rec_btn.setEnabled(False)
+            QTimer.singleShot(400, lambda: self.rec_btn.setEnabled(True))
             self.ui.toggle()
 
     # ---------------- history ----------------

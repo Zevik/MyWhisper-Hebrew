@@ -491,7 +491,7 @@ class Mywishper:
 def main():
     # QApplication must exist before any widget (tray / overlay / windows).
     qapp = QApplication.instance() or QApplication(sys.argv)
-    qapp.setQuitOnLastWindowClosed(True)  # closing the dashboard window exits the app
+    qapp.setQuitOnLastWindowClosed(False) # closing window keeps process warm for instant reopen
     # Own taskbar identity: without an explicit AppUserModelID Windows groups
     # the window under python.exe and shows the Python icon.
     try:
