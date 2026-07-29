@@ -6,6 +6,9 @@ $ErrorActionPreference = "Stop"
 $RepoUrl = "https://github.com/Zevik/MyWhisper-Hebrew.git"
 $InstallDir = Join-Path $env:USERPROFILE "MyWhisper"
 
+# Add standard Git installation paths to current session PATH immediately
+$env:Path += ";C:\Program Files\Git\cmd;C:\Program Files (x86)\Git\cmd;C:\Users\$env:USERNAME\AppData\Local\Programs\Git\cmd"
+
 try {
     Write-Host ""
     Write-Host "=== MyWhisper installer ===" -ForegroundColor Cyan
@@ -13,23 +16,15 @@ try {
 
     # 1. Git Detection and Installation
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        $stdGit = "C:\Program Files\Git\cmd\git.exe"
-        if (Test-Path $stdGit) {
-            $env:Path += ";C:\Program Files\Git\cmd"
-        }
-    }
-
-    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-Host "Git not found - attempting install..." -ForegroundColor Yellow
+        Write-Host "Git not found - attempting install via winget..." -ForegroundColor Yellow
         
-        # Try winget with explicit source
         try {
             winget install -e --id Git.Git -s winget --accept-source-agreements --accept-package-agreements | Out-Null
         } catch {
-            Write-Host "Winget search failed, trying fallback..." -ForegroundColor DarkGray
+            Write-Host "Winget search failed, trying direct download..." -ForegroundColor DarkGray
         }
 
-        # Refresh PATH variables
+        # Refresh PATH again
         $env:Path += ";C:\Program Files\Git\cmd;C:\Program Files (x86)\Git\cmd;C:\Users\$env:USERNAME\AppData\Local\Programs\Git\cmd"
 
         # Direct download fallback if winget failed
