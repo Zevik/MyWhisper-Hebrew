@@ -514,6 +514,7 @@ class MainWindow(FramelessWindow):
     def refresh_history(self):
         self._clear(self._hist_box)
         entries = self.ui.get_history()
+        shown = 0
         empty = True
         for e in entries:
             text = (e.get("text", "") or "").strip()
@@ -524,8 +525,7 @@ class MainWindow(FramelessWindow):
             if shown >= MAX_HISTORY_CARDS:
                 break
         if empty:
-            self._hist_box.addWidget(self._muted(
-                "לא נמצאו תוצאות" if q else "אין עדיין תמלולים"))
+            self._hist_box.addWidget(self._muted("אין עדיין תמלולים"))
         self._hist_box.addStretch(1)
 
     def card_html(self, entry_id, text):

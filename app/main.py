@@ -29,7 +29,7 @@ _instance_mutex = None  # kept alive for the process lifetime (OS frees on exit)
 
 def _kill_other_instances(current_pid):
     try:
-        cmd = f'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {{ ($_.Name -eq \'pythonw.exe\' -or $_.Name -eq \'python.exe\') -and $_.ProcessId -ne {current_pid} -and $_.CommandLine -match \'main\.py\' }} | Stop-Process -Force -ErrorAction SilentlyContinue"'
+        cmd = f'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {{ ($_.Name -eq \'pythonw.exe\' -or $_.Name -eq \'python.exe\') -and $_.ProcessId -ne {current_pid} -and $_.CommandLine -match \'main.py\' }} | Stop-Process -Force -ErrorAction SilentlyContinue"'
         subprocess.run(cmd, shell=True, capture_output=True)
     except Exception:
         pass
