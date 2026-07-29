@@ -11,34 +11,57 @@ try {
     Write-Host "=== MyWhisper installer ===" -ForegroundColor Cyan
     Write-Host "Install dir: $InstallDir" -ForegroundColor DarkGray
 
-    # 1. Git
+    # 1. Git Detection and Installation
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-Host "Git not found - installing via winget..." -ForegroundColor Yellow
-        winget install -e --id Git.Git --source winget --accept-source-agreements --accept-package-agreements
-        
-        # Add Git installation paths to current session PATH
-        $env:Path += ";C:\Program Files\Git\cmd;C:\Program Files (x86)\Git\cmd"
-        $env:Path += ";" + [Environment]::GetEnvironmentVariable("Path", "Machine")
-        $env:Path += ";" + [Environment]::GetEnvironmentVariable("Path", "User")
-        
-        if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-            Write-Host "Git installed but PATH not refreshed yet. Adding fallback..." -ForegroundColor Yellow
+        $stdGit = "C:\Program Files\Git\cmd\git.exe"
+        if (Test-Path $stdGit) {
+            $env:Path += ";C:\Program Files\Git\cmd"
         }
     }
 
-    # Verify Git again or fallback check
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        $gitExe = "C:\Program Files\Git\cmd\git.exe"
-        if (Test-Path $gitExe) {
+        Write-Host "Git not found - attempting install..." -ForegroundColor Yellow
+        
+        # Try winget with explicit source
+        try {
+            winget install -e --id Git.Git -s winget --accept-source-agreements --accept-package-agreements | Out-Null
+        } catch {
+            Write-Host "Winget search failed, trying fallback..." -ForegroundColor DarkGray
+        }
+
+        # Refresh PATH variables
+        $env:Path += ";C:\Program Files\Git\cmd;C:\Program Files (x86)\Git\cmd;C:\Users\$env:USERNAME\AppData\Local\Programs\Git\cmd"
+
+        # Direct download fallback if winget failed
+        if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+            $stdGit = "C:\Program Files\Git\cmd\git.exe"
+            if (Test-Path $stdGit) {
+                $env:Path += ";C:\Program Files\Git\cmd"
+            } else {
+                Write-Host "Downloading Git for Windows directly..." -ForegroundColor Yellow
+                $gitUrl = "https://github.com/git-for-windows/git/releases/download/v2.45.2.windows.1/Git-2.45.2-64-bit.exe"
+                $installerPath = Join-Path $env:TEMP "Git-Installer.exe"
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $gitUrl -OutFile $installerPath
+                Write-Host "Installing Git..." -ForegroundColor Yellow
+                Start-Process $installerPath -ArgumentList "/VERYSILENT /NORESTART" -Wait
+                $env:Path += ";C:\Program Files\Git\cmd"
+            }
+        }
+    }
+
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        $stdGit = "C:\Program Files\Git\cmd\git.exe"
+        if (Test-Path $stdGit) {
             $env:Path += ";C:\Program Files\Git\cmd"
         } else {
-            Write-Host "Git is required to download MyWhisper. Please install Git or restart terminal." -ForegroundColor Red
+            Write-Host "Git installation failed. Please install Git manually from https://git-scm.com" -ForegroundColor Red
             Read-Host "Press Enter to exit..."
             exit 1
         }
     }
 
-    # Stop any running instance first, so an update isn't blocked by locked files
+    # Stop any running instance first
     function Stop-MyWhisper {
         Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
             $_.Name -eq "pythonw.exe" -and $_.CommandLine -and
@@ -57,7 +80,7 @@ try {
         git clone $RepoUrl $InstallDir
     }
 
-    # 3. Python 3.12 venv + dependencies (setup.ps1 also creates config.json)
+    # 3. Python 3.12 venv + dependencies
     & powershell -ExecutionPolicy Bypass -File (Join-Path $InstallDir "scripts\setup.ps1")
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Setup failed - see error messages above." -ForegroundColor Red
@@ -65,7 +88,7 @@ try {
         exit 1
     }
 
-    # 4. Desktop shortcut -> silent pythonw launcher (no console window)
+    # 4. Desktop shortcut -> silent pythonw launcher
     $ws = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath("Desktop")
     $lnk = $ws.CreateShortcut((Join-Path $desktop "MyWhisper.lnk"))
