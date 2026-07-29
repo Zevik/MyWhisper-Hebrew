@@ -22,10 +22,13 @@ powershell -ExecutionPolicy Bypass -File setup.ps1
 .\.venv\Scripts\python app\main.py
 
 # Run silently to tray (no console window)
-wscript run_mywishper.vbs
+wscript scripts\run_mywishper.vbs
+
+# Create Desktop shortcut (creates MyWhisper.lnk on Desktop)
+powershell -ExecutionPolicy Bypass -File scripts\create_desktop_shortcut.ps1
 
 # Install/remove Windows autostart (creates MyWhisper.lnk in Startup folder)
-powershell -ExecutionPolicy Bypass -File install_autostart.ps1
+powershell -ExecutionPolicy Bypass -File scripts\install_autostart.ps1
 ```
 
 ```powershell

@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # and is checked *before* the heavy ML imports so a duplicate launch exits
 # instantly instead of loading the model and flashing a second tray icon.
 _MUTEX_NAME = "MyWhisper_MatanDigital_SingleInstance_v1"
+_SHOW_DASHBOARD_MSG_NAME = "MyWhisper_ShowDashboard_Message"
 _instance_mutex = None  # kept alive for the process lifetime (OS frees on exit)
 
 
@@ -36,8 +37,20 @@ def _acquire_single_instance():
         return True  # never block startup if the guard itself errors
 
 
+def _notify_existing_instance():
+    try:
+        user32 = ctypes.windll.user32
+        msg = user32.RegisterWindowMessageW(_SHOW_DASHBOARD_MSG_NAME)
+        if msg:
+            HWND_BROADCAST = 0xFFFF
+            user32.PostMessageW(HWND_BROADCAST, msg, 0, 0)
+    except Exception:
+        pass
+
+
 if not _acquire_single_instance():
-    print("[mywishper] Another instance is already running. Exiting.")
+    _notify_existing_instance()
+    print("[mywishper] Another instance is already running. Raised dashboard. Exiting.")
     sys.exit(0)
 
 import applog
@@ -46,9 +59,36 @@ applog.setup()  # before the component imports so their import-time logs are cap
 import logging
 log = logging.getLogger("main")
 
-from PySide6.QtCore import QTimer
+from ctypes import wintypes
+from PySide6.QtCore import QAbstractNativeEventFilter, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
+
+
+class _DashboardMessageFilter(QAbstractNativeEventFilter):
+    """Native Windows event filter catching external broadcast messages to open the dashboard."""
+
+    def __init__(self, callback):
+        super().__init__()
+        self.callback = callback
+        try:
+            self.msg_id = ctypes.windll.user32.RegisterWindowMessageW(_SHOW_DASHBOARD_MSG_NAME)
+        except Exception:
+            self.msg_id = 0
+
+    def nativeEventFilter(self, ev_type, message):
+        try:
+            et = bytes(ev_type)
+        except Exception:
+            et = ev_type
+        if et == b"windows_generic_MSG" and self.msg_id:
+            msg = wintypes.MSG.from_address(int(message))
+            if msg.message == self.msg_id:
+                log.info("Received external request to show dashboard")
+                self.callback()
+                return True, 0
+        return False, 0
+
 
 import corrections
 import history
@@ -171,7 +211,7 @@ class Mywishper:
         try:
             import json
             import urllib.request
-            url = "https://api.github.com/repos/MatanCH2020/MyWhisper/releases/latest"
+            url = "https://api.github.com/repos/Zevik/MyWhisper-Hebrew/releases/latest"
             req = urllib.request.Request(url, headers={"User-Agent": "MyWhisper"})
             with urllib.request.urlopen(req, timeout=8) as r:
                 return (json.load(r).get("tag_name") or "").lstrip("v") or None
@@ -463,6 +503,9 @@ def main():
         qapp.setWindowIcon(QIcon(str(icon_path)))
     app = Mywishper()  # loads the Whisper model
     app.start()
+    dash_filter = _DashboardMessageFilter(app.ui.open_settings)
+    qapp.installNativeEventFilter(dash_filter)
+    app._dash_filter = dash_filter  # keep reference alive
     # Open the window shortly after the event loop starts so it's visibly "there"
     # on launch (it also lives in the tray; closing the window keeps it running).
     QTimer.singleShot(300, app.ui.open_settings)

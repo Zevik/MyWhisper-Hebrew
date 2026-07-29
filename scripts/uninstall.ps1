@@ -1,6 +1,6 @@
 # MyWhisper one-line uninstaller.
 # From any PowerShell window:
-#   irm https://raw.githubusercontent.com/MatanCH2020/MyWhisper/main/uninstall.ps1 | iex
+#   irm https://raw.githubusercontent.com/Zevik/MyWhisper-Hebrew/main/scripts/uninstall.ps1 | iex
 #
 # What it does: stops any running instance, removes the Desktop and Startup
 # shortcuts, and deletes the %USERPROFILE%\MyWhisper installation directory.

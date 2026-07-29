@@ -7,14 +7,14 @@
 **תמלול עברית מקומי לווינדוז 🎙️ — לוחצים קיצור, מדברים, והטקסט מודבק איפה שהסמן.**
 **רץ כולו על ה-GPU שלך. בלי אינטרנט, בלי מנויים, בלי API.**
 
-[![Release](https://img.shields.io/github/v/release/MatanCH2020/MyWhisper?color=4C82F7&label=release)](https://github.com/MatanCH2020/MyWhisper/releases)
+[![Release](https://img.shields.io/github/v/release/Zevik/MyWhisper-Hebrew?color=4C82F7&label=release)](https://github.com/Zevik/MyWhisper-Hebrew/releases)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&logoColor=white)](#-%D7%93%D7%A8%D7%99%D7%A9%D7%95%D7%AA)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](#)
 [![GPU](https://img.shields.io/badge/faster--whisper-CUDA-76B900?logo=nvidia&logoColor=white)](#)
 [![Offline](https://img.shields.io/badge/100%25-Offline%20%26%20Private-2ea44f)](#)
 [![RTL](https://img.shields.io/badge/%D7%A2%D7%91%D7%A8%D7%99%D7%AA-RTL%20Native-4C82F7)](#)
 
-### 🌐 [דף הבית ← matanch2020.github.io/MyWhisper](https://matanch2020.github.io/MyWhisper/) · ⬇️ [הורדת מתקין](https://github.com/MatanCH2020/MyWhisper/releases/latest/download/MyWhisper-Setup.cmd)
+### ⬇️ [הורדת מתקין](https://github.com/Zevik/MyWhisper-Hebrew/releases/latest/download/MyWhisper-Setup.cmd)
 
 <br>
 
@@ -48,7 +48,7 @@
 פתח PowerShell והדבק:
 
 ```powershell
-irm https://raw.githubusercontent.com/MatanCH2020/MyWhisper/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/Zevik/MyWhisper-Hebrew/main/scripts/install.ps1 | iex
 ```
 
 הפקודה מתקינה Git ו-Python 3.12 אם חסרים, מורידה את הפרויקט ל-`%USERPROFILE%\MyWhisper`,
@@ -63,7 +63,7 @@ irm https://raw.githubusercontent.com/MatanCH2020/MyWhisper/main/scripts/install
 רוצה להסיר את התוכנה? פתח PowerShell והדבק:
 
 ```powershell
-irm https://raw.githubusercontent.com/MatanCH2020/MyWhisper/main/scripts/uninstall.ps1 | iex
+irm https://raw.githubusercontent.com/Zevik/MyWhisper-Hebrew/main/scripts/uninstall.ps1 | iex
 ```
 הפקודה סוגרת את התוכנה, מוחקת את קיצורי הדרך ואת כל תיקיית ההתקנה מהמחשב.
 

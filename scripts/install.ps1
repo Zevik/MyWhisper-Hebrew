@@ -8,7 +8,7 @@
 # On update it also closes the running instance first so the new code takes over.
 
 $ErrorActionPreference = "Stop"
-$RepoUrl = "https://github.com/MatanCH2020/MyWhisper.git"
+$RepoUrl = "https://github.com/Zevik/MyWhisper-Hebrew.git"
 $InstallDir = Join-Path $env:USERPROFILE "MyWhisper"
 
 Write-Host ""
