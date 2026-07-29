@@ -456,6 +456,9 @@ class MainWindow(FramelessWindow):
             self.refresh_history()
 
     def _on_rec_click(self):
+        if hasattr(self, "search") and self.search is not None:
+            self.search.clear()
+            self.search.clearFocus()
         if hasattr(self.ui, "toggle") and callable(self.ui.toggle):
             self.rec_btn.setEnabled(False)
             QTimer.singleShot(400, lambda: self.rec_btn.setEnabled(True))

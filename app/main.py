@@ -5,6 +5,7 @@ transcribed locally with faster-whisper (Hebrew, with punctuation) and pasted
 into whatever field has focus.
 """
 import ctypes
+import os
 import subprocess
 import sys
 import threading
@@ -368,15 +369,14 @@ class Mywishper:
                 if self.config.get("bidi_isolate", True):
                     out = corrections.format_bidi(text)  # keep English LTR in RTL
 
-                # Do not inject keystrokes into the Dashboard search box if the Dashboard has focus
+                # Do not inject keystrokes into the Dashboard search box if MyWhisper is the active window
                 is_dashboard_active = False
                 try:
                     fg_hwnd = ctypes.windll.user32.GetForegroundWindow()
-                    win_obj = self.ui._win
-                    if win_obj is not None and win_obj.isVisible():
-                        dash_hwnd = int(win_obj.winId())
-                        if fg_hwnd == dash_hwnd or win_obj.isActiveWindow():
-                            is_dashboard_active = True
+                    fg_pid = ctypes.c_ulong()
+                    ctypes.windll.user32.GetWindowThreadProcessId(fg_hwnd, ctypes.byref(fg_pid))
+                    if fg_pid.value == os.getpid():
+                        is_dashboard_active = True
                 except Exception:
                     pass
 
