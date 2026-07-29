@@ -422,23 +422,74 @@ class MainWindow(FramelessWindow):
         self.stack.setCurrentIndex(i)
 
     def closeEvent(self, e):
-        # X minimizes to the tray — the app keeps listening for the hotkey.
-        # Really quitting is done from the tray menu ("יציאה").
         if getattr(self, "_mic_testing", False):
             self._stop_mic_test()
-        if self._force_close:
-            e.accept()
+        e.accept()
+        self.ui.request_quit()
+
+    def set_rec_state(self, state):
+        if not hasattr(self, "rec_btn"):
             return
-        e.ignore()
-        self.hide()
-        self.ui.notify_minimized()
+        if state == "recording":
+            self.rec_btn.setText("🔴 מקליט... לחץ לעצירה ותמלול")
+            self.rec_btn.setStyleSheet(
+                "background-color: #ef4444; color: white; border: none; border-radius: 8px; padding: 0 24px; font-weight: bold;"
+            )
+            self.rec_status_lbl.setText("מקליט כעת... לחץ על הכפתור האדום לסיום ותמלול")
+        elif state == "transcribing":
+            self.rec_btn.setText("⏳ מתמלל...")
+            self.rec_btn.setStyleSheet(
+                "background-color: #f59e0b; color: white; border: none; border-radius: 8px; padding: 0 24px; font-weight: bold;"
+            )
+            self.rec_status_lbl.setText("מעבד את הדיבור ומפיק טקסט בעברית...")
+        else:
+            self.rec_btn.setText("🎙️ התחל הקלטה")
+            self.rec_btn.setStyleSheet(
+                f"background-color: {self.p['accent']}; color: white; border: none; border-radius: 8px; padding: 0 24px; font-weight: bold;"
+            )
+            self.rec_status_lbl.setText("לחץ להתחלת הקלטת דיבור בעברית")
+            self.refresh_history()
+
+    def _on_rec_click(self):
+        if hasattr(self.ui, "toggle") and callable(self.ui.toggle):
+            self.ui.toggle()
 
     # ---------------- history ----------------
     def _history_page(self):
         w = QWidget()
         v = QVBoxLayout(w)
         v.setContentsMargins(18, 16, 18, 14)
-        v.setSpacing(10)
+        v.setSpacing(12)
+
+        # Prominent Recording Control Card
+        rec_card = Card()
+        rec_row = QHBoxLayout()
+
+        self.rec_btn = QPushButton("🎙️ התחל הקלטה")
+        self.rec_btn.setFixedHeight(46)
+        self.rec_btn.setFont(QFont(theme.pick_font(), 13, QFont.Bold))
+        self.rec_btn.setCursor(Qt.PointingHandCursor)
+        self.rec_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.p['accent']};
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 0 24px;
+                font-weight: bold;
+            }}
+        """)
+        self.rec_btn.clicked.connect(self._on_rec_click)
+
+        self.rec_status_lbl = QLabel("לחץ להתחלת הקלטת דיבור בעברית")
+        self.rec_status_lbl.setStyleSheet(f"color:{self.p['text_muted']}; font-size:13px;")
+
+        rec_row.addWidget(self.rec_btn)
+        rec_row.addSpacing(15)
+        rec_row.addWidget(self.rec_status_lbl, 1)
+        rec_card.vbox.addLayout(rec_row)
+        v.addWidget(rec_card)
+
         bar = QHBoxLayout()
         self.search = QLineEdit()
         self.search.setPlaceholderText("חיפוש בהיסטוריה…")
@@ -998,9 +1049,15 @@ class AppUI(QObject):
         self._overlay = Overlay(level_provider)
         self._win = None
 
+        self.toggle = lambda: None          # wired to Mywishper.toggle by main
         self._overlay_sig.connect(self._overlay.set_state)
+        self._overlay_sig.connect(self._on_state_changed)
         self._settings_sig.connect(self._show_window)
         self._quit_sig.connect(QApplication.instance().quit)
+
+    def _on_state_changed(self, state):
+        if self._win is not None and hasattr(self._win, "set_rec_state"):
+            self._win.set_rec_state(state)
 
     def _apply_global_style(self):
         qapp = QApplication.instance()

@@ -137,6 +137,7 @@ class Mywishper:
             hotkey=self.config.get("hotkey"),
         )
         self.ui.notify = self.tray.notify  # balloon hints (minimize-to-tray etc.)
+        self.ui.toggle = self.toggle
         self.hotkeys = HotkeyManager(self.config.get("hotkey"), self.toggle)
         self.ui.set_hotkey = self._set_hotkey            # live hotkey editor
         self.ui.relaunch_as_admin = self._relaunch_as_admin
@@ -490,7 +491,7 @@ class Mywishper:
 def main():
     # QApplication must exist before any widget (tray / overlay / windows).
     qapp = QApplication.instance() or QApplication(sys.argv)
-    qapp.setQuitOnLastWindowClosed(False)  # closing settings keeps the tray alive
+    qapp.setQuitOnLastWindowClosed(True)  # closing the dashboard window exits the app
     # Own taskbar identity: without an explicit AppUserModelID Windows groups
     # the window under python.exe and shows the Python icon.
     try:
