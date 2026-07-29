@@ -370,8 +370,15 @@ class Mywishper:
 
                 # Do not inject keystrokes into the Dashboard search box if the Dashboard has focus
                 is_dashboard_active = False
-                if self.ui._win is not None and hasattr(self.ui._win, "isActiveWindow"):
-                    is_dashboard_active = self.ui._win.isActiveWindow()
+                try:
+                    fg_hwnd = ctypes.windll.user32.GetForegroundWindow()
+                    win_obj = self.ui._win
+                    if win_obj is not None and win_obj.isVisible():
+                        dash_hwnd = int(win_obj.winId())
+                        if fg_hwnd == dash_hwnd or win_obj.isActiveWindow():
+                            is_dashboard_active = True
+                except Exception:
+                    pass
 
                 if not is_dashboard_active:
                     paste_text(out, self.config.get("restore_clipboard", True),
