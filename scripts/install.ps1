@@ -17,8 +17,8 @@ try {
     # Stop any running instance first so files are not locked
     function Stop-MyWhisper {
         Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
-            $_.Name -eq "pythonw.exe" -and $_.CommandLine -and
-            $_.CommandLine -match "main\.py" -and $_.CommandLine -like "*$InstallDir*"
+            ($_.Name -eq "pythonw.exe" -or $_.Name -eq "python.exe") -and
+            $_.CommandLine -and $_.CommandLine -match "main\.py"
         } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
     }
     Stop-MyWhisper
