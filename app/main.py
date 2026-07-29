@@ -507,9 +507,8 @@ def main():
     dash_filter = _DashboardMessageFilter(app.ui.open_settings)
     qapp.installNativeEventFilter(dash_filter)
     app._dash_filter = dash_filter  # keep reference alive
-    # Open the window shortly after the event loop starts so it's visibly "there"
-    # on launch (it also lives in the tray; closing the window keeps it running).
-    QTimer.singleShot(300, app.ui.open_settings)
+    # Open the window immediately so Qt has an active window when entering qapp.exec()
+    app.ui.open_settings()
     sys.exit(qapp.exec())
 
 

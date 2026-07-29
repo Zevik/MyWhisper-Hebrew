@@ -54,12 +54,12 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# 4. Desktop shortcut -> silent launcher (no console window)
+# 4. Desktop shortcut -> silent pythonw launcher (no console window)
 $ws = New-Object -ComObject WScript.Shell
 $desktop = [Environment]::GetFolderPath("Desktop")
 $lnk = $ws.CreateShortcut((Join-Path $desktop "MyWhisper.lnk"))
-$lnk.TargetPath = "wscript.exe"
-$lnk.Arguments = '"' + (Join-Path $InstallDir "scripts\run_mywishper.vbs") + '"'
+$lnk.TargetPath = Join-Path $InstallDir ".venv\Scripts\pythonw.exe"
+$lnk.Arguments = '"' + (Join-Path $InstallDir "app\main.py") + '"'
 $lnk.WorkingDirectory = $InstallDir
 $lnk.Description = "MyWhisper - Hebrew dictation"
 $icon = Join-Path $InstallDir "app\assets\icon.ico"
