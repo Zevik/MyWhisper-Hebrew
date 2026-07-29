@@ -456,9 +456,6 @@ class MainWindow(FramelessWindow):
             self.refresh_history()
 
     def _on_rec_click(self):
-        if hasattr(self, "search") and self.search is not None:
-            self.search.clear()
-            self.search.clearFocus()
         if hasattr(self.ui, "toggle") and callable(self.ui.toggle):
             self.rec_btn.setEnabled(False)
             QTimer.singleShot(400, lambda: self.rec_btn.setEnabled(True))
@@ -501,12 +498,11 @@ class MainWindow(FramelessWindow):
         v.addWidget(rec_card)
 
         bar = QHBoxLayout()
-        self.search = QLineEdit()
-        self.search.setPlaceholderText("חיפוש בהיסטוריה…")
-        self.search.addAction(icons.icon("search", self.p["text_muted"], 16),
-                              QLineEdit.LeadingPosition)
-        self.search.textChanged.connect(self.refresh_history)
-        bar.addWidget(self.search, 1)
+        hist_title = QLabel("היסטוריית הקלטות ותמלול")
+        hist_title.setFont(QFont(theme.pick_font(), 13, QFont.Bold))
+        hist_title.setStyleSheet(f"color:{self.p['text']};")
+        bar.addWidget(hist_title)
+        bar.addStretch(1)
         refresh = self._tool_btn("refresh", "רענן", self.refresh_history)
         clear = self._tool_btn("trash", "נקה הכל", self._clear_all, danger=True)
         bar.addWidget(refresh)
@@ -517,14 +513,10 @@ class MainWindow(FramelessWindow):
 
     def refresh_history(self):
         self._clear(self._hist_box)
-        q = (self.search.text() if hasattr(self, "search") else "").strip().lower()
         entries = self.ui.get_history()
-        shown = 0
         empty = True
         for e in entries:
             text = (e.get("text", "") or "").strip()
-            if q and q not in text.lower():
-                continue
             empty = False
             self._hist_box.addWidget(HistoryCard(self, e.get("id", ""), text,
                                                  self._fmt_time(e.get("time", ""))))
