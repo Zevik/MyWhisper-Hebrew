@@ -142,6 +142,61 @@ class CorrectionDialog(QDialog):
         self.accept()
 
 
+class AddWordDialog(QDialog):
+    """Dialog to manually add a new correction (wrong -> right) to the dictionary."""
+
+    def __init__(self, parent, palette, on_save):
+        super().__init__(parent)
+        self.setWindowTitle("הוספת תיקון חדש למילון")
+        self.setStyleSheet(f"QDialog{{background:{palette['bg']};}}")
+        self.resize(400, 240)
+        self._on_save = on_save
+        p = palette
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(20, 18, 20, 16)
+        lay.setSpacing(10)
+
+        t = QLabel("הוספת תיקון למילון")
+        t.setFont(QFont(theme.pick_font(), 15, QFont.Bold))
+        lay.addWidget(t)
+
+        lbl1 = QLabel("המילה כפי שהתוכנה תמללה (שגוי):")
+        lbl1.setStyleSheet(f"color:{p['text']}; font-size:12px; font-weight:bold;")
+        lay.addWidget(lbl1)
+        self.wrong_edit = QLineEdit()
+        self.wrong_edit.setPlaceholderText("לדוגמה: אבינר")
+        lay.addWidget(self.wrong_edit)
+
+        lbl2 = QLabel("איך המילה צריכה להיכתב (נכון):")
+        lbl2.setStyleSheet(f"color:{p['text']}; font-size:12px; font-weight:bold;")
+        lay.addWidget(lbl2)
+        self.right_edit = QLineEdit()
+        self.right_edit.setPlaceholderText("לדוגמה: אבינר")
+        lay.addWidget(self.right_edit)
+
+        lay.addStretch(1)
+        row = QHBoxLayout()
+        save = QPushButton("שמור למילון")
+        save.setStyleSheet(f"background-color:{p['accent']}; color:white; font-weight:bold; border-radius:6px; padding:6px 16px;")
+        save.clicked.connect(self._save)
+
+        cancel = QPushButton("ביטול")
+        cancel.clicked.connect(self.reject)
+
+        row.addWidget(save)
+        row.addStretch(1)
+        row.addWidget(cancel)
+        lay.addLayout(row)
+        self.wrong_edit.setFocus()
+
+    def _save(self):
+        w = self.wrong_edit.text().strip()
+        r = self.right_edit.text().strip()
+        if w and r:
+            self._on_save(w, r)
+        self.accept()
+
+
 class ChangelogDialog(QDialog):
     def __init__(self, parent, palette):
         super().__init__(parent)
@@ -596,10 +651,24 @@ class MainWindow(FramelessWindow):
         bar = QHBoxLayout()
         bar.addWidget(self._section("תיקונים שנלמדו  ·  שגוי ← נכון"))
         bar.addStretch(1)
+
+        add_btn = QPushButton("➕ הוסף תיקון")
+        add_btn.setCursor(Qt.PointingHandCursor)
+        add_btn.setStyleSheet(f"background-color:{self.p['accent']}; color:white; border:none; border-radius:6px; padding:6px 14px; font-weight:bold;")
+        add_btn.clicked.connect(self._open_add_word_dialog)
+        bar.addWidget(add_btn)
+        bar.addSpacing(8)
+
         bar.addWidget(self._tool_btn("refresh", "רענן", self.refresh_dict))
         v.addLayout(bar)
         self._dict_box = self._scroll(v)
         return w
+
+    def _open_add_word_dialog(self):
+        def on_save(wrong, right):
+            self.ui.add_correction(wrong, right)
+            self.refresh_dict()
+        AddWordDialog(self, self.p, on_save).exec()
 
     def refresh_dict(self):
         self._clear(self._dict_box)
