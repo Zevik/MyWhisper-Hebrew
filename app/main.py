@@ -27,32 +27,26 @@ _SHOW_DASHBOARD_MSG_NAME = "MyWhisper_ShowDashboard_Message"
 _instance_mutex = None  # kept alive for the process lifetime (OS frees on exit)
 
 
+def _kill_other_instances(current_pid):
+    try:
+        cmd = f'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {{ ($_.Name -eq \'pythonw.exe\' -or $_.Name -eq \'python.exe\') -and $_.ProcessId -ne {current_pid} -and $_.CommandLine -match \'main\.py\' }} | Stop-Process -Force -ErrorAction SilentlyContinue"'
+        subprocess.run(cmd, shell=True, capture_output=True)
+    except Exception:
+        pass
+
 def _acquire_single_instance():
-    global _instance_mutex
+    current_pid = os.getpid()
     try:
         kernel32 = ctypes.windll.kernel32
         _instance_mutex = kernel32.CreateMutexW(None, False, _MUTEX_NAME)
         ERROR_ALREADY_EXISTS = 183
-        return kernel32.GetLastError() != ERROR_ALREADY_EXISTS
-    except Exception:
-        return True  # never block startup if the guard itself errors
-
-
-def _notify_existing_instance():
-    try:
-        user32 = ctypes.windll.user32
-        msg = user32.RegisterWindowMessageW(_SHOW_DASHBOARD_MSG_NAME)
-        if msg:
-            HWND_BROADCAST = 0xFFFF
-            user32.PostMessageW(HWND_BROADCAST, msg, 0, 0)
+        if kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+            _kill_other_instances(current_pid)
     except Exception:
         pass
+    return True
 
-
-if not _acquire_single_instance():
-    _notify_existing_instance()
-    print("[mywishper] Another instance is already running. Raised dashboard. Exiting.")
-    sys.exit(0)
+_acquire_single_instance()
 
 import applog
 applog.setup()  # before the component imports so their import-time logs are captured
