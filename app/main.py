@@ -367,8 +367,15 @@ class Mywishper:
                 out = text
                 if self.config.get("bidi_isolate", True):
                     out = corrections.format_bidi(text)  # keep English LTR in RTL
-                paste_text(out, self.config.get("restore_clipboard", True),
-                           self.config.get("clipboard_restore_delay", 0.5))
+
+                # Do not inject keystrokes into the Dashboard search box if the Dashboard has focus
+                is_dashboard_active = False
+                if self.ui._win is not None and hasattr(self.ui._win, "isActiveWindow"):
+                    is_dashboard_active = self.ui._win.isActiveWindow()
+
+                if not is_dashboard_active:
+                    paste_text(out, self.config.get("restore_clipboard", True),
+                               self.config.get("clipboard_restore_delay", 0.5))
                 log.info("-> %s", text)
             else:
                 log.info("(empty transcription)")
