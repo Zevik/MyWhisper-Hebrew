@@ -14,11 +14,25 @@ try {
     # 1. Git
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         Write-Host "Git not found - installing via winget..." -ForegroundColor Yellow
-        winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements
-        $env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
-                    [Environment]::GetEnvironmentVariable("Path", "User")
+        winget install -e --id Git.Git --source winget --accept-source-agreements --accept-package-agreements
+        
+        # Add Git installation paths to current session PATH
+        $env:Path += ";C:\Program Files\Git\cmd;C:\Program Files (x86)\Git\cmd"
+        $env:Path += ";" + [Environment]::GetEnvironmentVariable("Path", "Machine")
+        $env:Path += ";" + [Environment]::GetEnvironmentVariable("Path", "User")
+        
         if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-            Write-Host "Git installed but not visible yet - open a new terminal and re-run the install command." -ForegroundColor Red
+            Write-Host "Git installed but PATH not refreshed yet. Adding fallback..." -ForegroundColor Yellow
+        }
+    }
+
+    # Verify Git again or fallback check
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        $gitExe = "C:\Program Files\Git\cmd\git.exe"
+        if (Test-Path $gitExe) {
+            $env:Path += ";C:\Program Files\Git\cmd"
+        } else {
+            Write-Host "Git is required to download MyWhisper. Please install Git or restart terminal." -ForegroundColor Red
             Read-Host "Press Enter to exit..."
             exit 1
         }
