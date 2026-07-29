@@ -27,26 +27,31 @@ _SHOW_DASHBOARD_MSG_NAME = "MyWhisper_ShowDashboard_Message"
 _instance_mutex = None  # kept alive for the process lifetime (OS frees on exit)
 
 
-def _kill_other_instances(current_pid):
-    try:
-        cmd = f'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {{ ($_.Name -eq \'pythonw.exe\' -or $_.Name -eq \'python.exe\') -and $_.ProcessId -ne {current_pid} -and $_.CommandLine -match \'main.py\' }} | Stop-Process -Force -ErrorAction SilentlyContinue"'
-        subprocess.run(cmd, shell=True, capture_output=True)
-    except Exception:
-        pass
-
 def _acquire_single_instance():
-    current_pid = os.getpid()
+    global _instance_mutex
     try:
         kernel32 = ctypes.windll.kernel32
         _instance_mutex = kernel32.CreateMutexW(None, False, _MUTEX_NAME)
         ERROR_ALREADY_EXISTS = 183
-        if kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
-            _kill_other_instances(current_pid)
+        return kernel32.GetLastError() != ERROR_ALREADY_EXISTS
+    except Exception:
+        return True
+
+
+def _notify_existing_instance():
+    try:
+        user32 = ctypes.windll.user32
+        msg = user32.RegisterWindowMessageW(_SHOW_DASHBOARD_MSG_NAME)
+        if msg:
+            HWND_BROADCAST = 0xFFFF
+            user32.PostMessageW(HWND_BROADCAST, msg, 0, 0)
     except Exception:
         pass
-    return True
 
-_acquire_single_instance()
+
+if not _acquire_single_instance():
+    _notify_existing_instance()
+    sys.exit(0)
 
 import applog
 applog.setup()  # before the component imports so their import-time logs are captured
@@ -72,16 +77,15 @@ class _DashboardMessageFilter(QAbstractNativeEventFilter):
             self.msg_id = 0
 
     def nativeEventFilter(self, ev_type, message):
-        try:
-            et = bytes(ev_type)
-        except Exception:
-            et = ev_type
-        if et == b"windows_generic_MSG" and self.msg_id:
-            msg = wintypes.MSG.from_address(int(message))
-            if msg.message == self.msg_id:
-                log.info("Received external request to show dashboard")
-                self.callback()
-                return True, 0
+        if self.msg_id:
+            try:
+                msg = wintypes.MSG.from_address(int(message))
+                if msg.message == self.msg_id:
+                    log.info("Received external request to show dashboard")
+                    QTimer.singleShot(0, self.callback)
+                    return True, 0
+            except Exception:
+                pass
         return False, 0
 
 
