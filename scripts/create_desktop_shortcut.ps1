@@ -1,4 +1,4 @@
-# Creates a Desktop shortcut for MyWhisper (Matan Digital).
+# Creates a Desktop shortcut for MyWhisper.
 # Run: powershell -ExecutionPolicy Bypass -File scripts\create_desktop_shortcut.ps1
 
 $root = Split-Path $PSScriptRoot -Parent

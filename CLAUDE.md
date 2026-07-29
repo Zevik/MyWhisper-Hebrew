@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-MyWhisper (brand: **Matan Digital**) is a Windows, SuperWhisper-style local Hebrew dictation tool. The user presses a global hotkey anywhere, speaks Hebrew, and the speech is transcribed **locally on the GPU** via `faster-whisper` (with punctuation) and auto-pasted into the focused text field. No internet, no API costs. The README is in Hebrew and is the primary user-facing doc.
+MyWhisper is a Windows, SuperWhisper-style local Hebrew dictation tool. The user presses a global hotkey anywhere, speaks Hebrew, and the speech is transcribed **locally on the GPU** via `faster-whisper` (with punctuation) and auto-pasted into the focused text field. No internet, no API costs. The README is in Hebrew and is the primary user-facing doc.
 
 ## Commands
 

@@ -382,7 +382,7 @@ class MainWindow(FramelessWindow):
         self.p = palette
         self._force_close = False  # set by AppUI._rebuild for a real close
         self._update_result.connect(self._on_update_result)
-        self.setWindowTitle("MyWhisper — Matan Digital")
+        self.setWindowTitle("MyWhisper")
         self.setMinimumSize(720, 560)
         self.resize(900, 680)
         self.container.setStyleSheet(f"#container{{background:{palette['bg']};border-radius:14px;}}")

@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # ERROR_ALREADY_EXISTS and bails out. This is more reliable than a socket bind
 # and is checked *before* the heavy ML imports so a duplicate launch exits
 # instantly instead of loading the model and flashing a second tray icon.
-_MUTEX_NAME = "MyWhisper_MatanDigital_SingleInstance_v1"
+_MUTEX_NAME = "MyWhisper_SingleInstance_v1"
 _SHOW_DASHBOARD_MSG_NAME = "MyWhisper_ShowDashboard_Message"
 _instance_mutex = None  # kept alive for the process lifetime (OS frees on exit)
 
@@ -495,7 +495,7 @@ def main():
     # the window under python.exe and shows the Python icon.
     try:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-            "MatanDigital.MyWhisper")
+            "Zevik.MyWhisper")
     except Exception:
         pass
     icon_path = Path(__file__).resolve().parent / "assets" / "icon.ico"

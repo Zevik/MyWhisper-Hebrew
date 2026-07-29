@@ -120,7 +120,7 @@ class TitleBar(QWidget):
         title.setFont(QFont(theme.pick_font(), 12, QFont.Bold))
         title.setStyleSheet(f"color:{p['text']};")
         lay.addWidget(title)
-        sub = QLabel("· Matan Digital")
+        sub = QLabel("· Hebrew Dictation")
         sub.setObjectName("muted")
         lay.addWidget(sub)
         lay.addStretch(1)

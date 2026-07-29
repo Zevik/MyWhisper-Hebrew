@@ -203,7 +203,7 @@ powershell -ExecutionPolicy Bypass -File scripts\install_autostart.ps1
 
 <div align="center">
 
-**MyWhisper** · נבנה על ידי [Matan Digital](https://github.com/MatanCH2020) 💙
+**MyWhisper** · תמלול עברית מקומי ל-Windows 🎙️
 מבוסס [faster-whisper](https://github.com/SYSTRAN/faster-whisper) + מודל העברית של [ivrit.ai](https://huggingface.co/ivrit-ai)
 
 </div>

@@ -5,6 +5,6 @@ title MyWhisper Installer
 echo.
 echo  === MyWhisper — Hebrew dictation for Windows ===
 echo.
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/MatanCH2020/MyWhisper/main/scripts/install.ps1 | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Zevik/MyWhisper-Hebrew/main/scripts/install.ps1 | iex"
 echo.
 pause

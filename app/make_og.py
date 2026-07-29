@@ -67,7 +67,7 @@ def main():
     p.setPen(QColor("#5b6577"))
     p.setFont(_font(24, QFont.Normal))
     p.drawText(QRectF(0, 556, W, 40), Qt.AlignHCenter | Qt.AlignVCenter,
-               "Matan Digital  ·  github.com/MatanCH2020/MyWhisper")
+               "Zevik  ·  github.com/Zevik/MyWhisper-Hebrew")
 
     p.end()
     DOCS.mkdir(exist_ok=True)
